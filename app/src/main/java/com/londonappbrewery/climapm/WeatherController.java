@@ -22,6 +22,8 @@ import com.loopj.android.http.RequestParams;
 
 import org.json.JSONObject;
 
+import cz.msebera.android.httpclient.Header;
+
 
 public class WeatherController extends AppCompatActivity {
 
@@ -142,13 +144,16 @@ public class WeatherController extends AppCompatActivity {
     private void letsDoSomeNetworking(RequestParams params){
         AsyncHttpClient client = new AsyncHttpClient();
         client.get( WEATHER_URL,params,new JsonHttpResponseHandler(){
-
-            public void onSuccess( int statusCode, PreferenceActivity.Header[] headers,
-                                   JSONObject response) {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers,
+                                  JSONObject response) {
                 Log. d(LOGCAT_TAG,"Sucess! JSON: "+response.toString());
-            }
+                WeatherDataModel weatherData = WeatherDataModel.fromJson(response);
+                updateUI(weatherData);
 
-            public void onFailure(int statusCode, PreferenceActivity.Header[] headers, Throwable
+            }
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable
                     throwable, JSONObject errorResponse) {
                 Log. e(LOGCAT_TAG,"Fail "+throwable.toString());
                 Log. d(LOGCAT_TAG,"Status code "+ statusCode);
@@ -158,12 +163,24 @@ public class WeatherController extends AppCompatActivity {
 
 
 
-    // TODO: Add updateUI() here:
 
+    // TODO: Add updateUI() here:
+    private void updateUI(WeatherDataModel weatherData){
+        mCityLabel.setText(weatherData.getCity());
+        mTemperatureLabel.setText(weatherData.getTemperature());
+        int resourceID =
+                getResources().getIdentifier(weatherData.getIconName(), "drawable",getPackageName(
+                ));
+        mWeatherImage.setImageResource(resourceID);
+    }
 
 
     // TODO: Add onPause() here:
 
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(mLocationManager != null) mLocationManager.removeUpdates( mLocationListener);
+    }
 
 }
